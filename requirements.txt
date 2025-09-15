@@ -1,3 +1,4 @@
+yt_dlp
 streamlit
 pandas
 numpy
@@ -12,3 +13,7 @@ requests
 sentence-transformers
 google-api-python-client
 isodate
+requests
+scikitlearn
+networkx
+faster_whisper
