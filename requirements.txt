@@ -10,4 +10,6 @@ networkx
 openpyxl
 requests
 sentence-transformers
-googleapiclient
+google-api-python-client
+
+
