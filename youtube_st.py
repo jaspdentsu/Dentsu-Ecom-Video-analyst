@@ -34,190 +34,174 @@ st.title("🎬 YouTube Embedding & Similarity Analysis")
 # -----------------------------
 # Sidebar Inputs
 # -----------------------------
-# st.sidebar.header("YouTube Search")
-# query = st.sidebar.text_input("Enter search query:", value="AI technology")
-# max_results = st.sidebar.slider("Number of results", 5, 20, 10)
-# include_transcripts = st.sidebar.checkbox("Include transcripts (slower)", value=True)
+st.sidebar.header("YouTube Search")
+query = st.sidebar.text_input("Enter search query:", value="AI technology")
+max_results = st.sidebar.slider("Number of results", 5, 20, 10)
+include_transcripts = st.sidebar.checkbox("Include transcripts (slower)", value=True)
 run_button = st.sidebar.button("Run Search")
-
-# Load pre-saved YouTube analysis file
-# Load Excel once and store in session_state
-@st.cache_data
-def load_data(file_path):
-    return pd.read_excel(file_path)
-
-df = load_data("youtube_analysis_smartphones_under_50000.xlsx")
-st.session_state.df = df
-
-if "df" not in st.session_state:
-    file_path = "youtube_analysis_smartphones_under_50000.xlsx"
-    st.session_state.df = pd.read_excel(file_path)
-
-df = st.session_state.df  # use session-stored dataframe
-st.success(f"Loaded {len(df)} videos from Excel file for analysis.")
 
 # -----------------------------
 # API Configuration
 # -----------------------------
 # IMPORTANT: Replace with your actual API key
 API_KEY = "AIzaSyBdrsz6LnGaDwgdGCrf5-NqcTnPlfy6bDY"  # Replace with your actual API key
-# YOUTUBE_API_SERVICE_NAME = "youtube"
-# YOUTUBE_API_VERSION = "v3"
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
 
 # Rate limiting configuration
-# TRANSCRIPT_DELAY = 2  # seconds between transcript requests
-# MAX_RETRIES = 3
+TRANSCRIPT_DELAY = 2  # seconds between transcript requests
+MAX_RETRIES = 3
 
-# # -----------------------------
-# # Description extraction Function
-# # -----------------------------
-# def get_full_description(video_url):
-#     try:
-#         headers = {"User-Agent": "Mozilla/5.0"}
-#         response = requests.get(video_url, headers=headers, timeout=10)
-#         if response.status_code != 200:
-#             return ""
+# -----------------------------
+# Description extraction Function
+# -----------------------------
+def get_full_description(video_url):
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(video_url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            return ""
 
-#         soup = BeautifulSoup(response.text, "html.parser")
-#         desc_elements = soup.find_all("yt-formatted-string", class_="yt-core-attributed-string--link-inherit-color")
+        soup = BeautifulSoup(response.text, "html.parser")
+        desc_elements = soup.find_all("yt-formatted-string", class_="yt-core-attributed-string--link-inherit-color")
 
-#         # Join all text pieces
-#         full_desc = " ".join([el.get_text(separator=" ", strip=True) for el in desc_elements])
+        # Join all text pieces
+        full_desc = " ".join([el.get_text(separator=" ", strip=True) for el in desc_elements])
 
-#         return full_desc if full_desc.strip() else ""
-#     except Exception as e:
-#         return f"Description not available ({str(e)})"
+        return full_desc if full_desc.strip() else ""
+    except Exception as e:
+        return f"Description not available ({str(e)})"
 
-# # -----------------------------
-# # Enhanced Helper Functions
-# # -----------------------------
-# @st.cache_data(ttl=3600)  # Cache for 1 hour
-# def youtube_search(query, max_results=10):
-#     """Search YouTube videos with caching"""
-#     if API_KEY == "YOUR_YOUTUBE_API_KEY_HERE":
-#         st.error("⚠️ Please set your YouTube API key in the code!")
-#         return pd.DataFrame()
+# -----------------------------
+# Enhanced Helper Functions
+# -----------------------------
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def youtube_search(query, max_results=10):
+    """Search YouTube videos with caching"""
+    if API_KEY == "YOUR_YOUTUBE_API_KEY_HERE":
+        st.error("⚠️ Please set your YouTube API key in the code!")
+        return pd.DataFrame()
     
-#     try:
-#         youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
-#         search_response = youtube.search().list(
-#             q=query,
-#             type="video",
-#             part="id,snippet",
-#             maxResults=max_results
-#         ).execute()
+    try:
+        youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
+        search_response = youtube.search().list(
+            q=query,
+            type="video",
+            part="id,snippet",
+            maxResults=max_results
+        ).execute()
 
-#         videos = []
-#         video_ids = [item["id"]["videoId"] for item in search_response["items"]]
+        videos = []
+        video_ids = [item["id"]["videoId"] for item in search_response["items"]]
         
-#         # Batch request for video statistics
-#         video_response = youtube.videos().list(
-#             part="statistics,contentDetails",
-#             id=",".join(video_ids)
-#         ).execute()
+        # Batch request for video statistics
+        video_response = youtube.videos().list(
+            part="statistics,contentDetails",
+            id=",".join(video_ids)
+        ).execute()
         
-#         # Batch request for channel statistics
-#         channel_ids = [item["snippet"]["channelId"] for item in search_response["items"]]
-#         channel_response = youtube.channels().list(
-#             part="statistics",
-#             id=",".join(set(channel_ids))  # Remove duplicates
-#         ).execute()
+        # Batch request for channel statistics
+        channel_ids = [item["snippet"]["channelId"] for item in search_response["items"]]
+        channel_response = youtube.channels().list(
+            part="statistics",
+            id=",".join(set(channel_ids))  # Remove duplicates
+        ).execute()
         
-#         # Create lookup for channel subscribers
-#         channel_subs = {ch["id"]: ch["statistics"].get("subscriberCount", "0") 
-#                        for ch in channel_response["items"]}
+        # Create lookup for channel subscribers
+        channel_subs = {ch["id"]: ch["statistics"].get("subscriberCount", "0") 
+                       for ch in channel_response["items"]}
 
-#         for i, item in enumerate(search_response["items"]):
-#             video_id = item["id"]["videoId"]
-#             title = item["snippet"]["title"]
-#             channel_id = item["snippet"]["channelId"]
-#             channel = item["snippet"]["channelTitle"]
-#             url = f"https://www.youtube.com/watch?v={video_id}"
-#             thumbnail = item["snippet"]["thumbnails"]["high"]["url"]
-#             published_at = item["snippet"]["publishedAt"]
-#             description = get_full_description(url)
-#             if not description:
-#                 description = item["snippet"].get("description", "")
+        for i, item in enumerate(search_response["items"]):
+            video_id = item["id"]["videoId"]
+            title = item["snippet"]["title"]
+            channel_id = item["snippet"]["channelId"]
+            channel = item["snippet"]["channelTitle"]
+            url = f"https://www.youtube.com/watch?v={video_id}"
+            thumbnail = item["snippet"]["thumbnails"]["high"]["url"]
+            published_at = item["snippet"]["publishedAt"]
+            description = get_full_description(url)
+            if not description:
+                description = item["snippet"].get("description", "")
 
-#             # Get statistics from batch response
-#             stats = video_response["items"][i]["statistics"]
-#             content = video_response["items"][i]["contentDetails"]
+            # Get statistics from batch response
+            stats = video_response["items"][i]["statistics"]
+            content = video_response["items"][i]["contentDetails"]
 
-#             views = int(stats.get("viewCount", "0"))
-#             likes = int(stats.get("likeCount", "0"))
-#             comments = int(stats.get("commentCount", "0"))
-#             duration = isodate.parse_duration(content["duration"]).total_seconds()
-#             subscribers = int(channel_subs.get(channel_id, "0"))
+            views = int(stats.get("viewCount", "0"))
+            likes = int(stats.get("likeCount", "0"))
+            comments = int(stats.get("commentCount", "0"))
+            duration = isodate.parse_duration(content["duration"]).total_seconds()
+            subscribers = int(channel_subs.get(channel_id, "0"))
 
-#             videos.append({
-#                 "video_id": video_id,
-#                 "title": title,
-#                 "description": description,  # ✅ Add this line
-#                 "url": url,
-#                 "channel": channel,
-#                 "subscribers": subscribers,
-#                 "views": views,
-#                 "likes": likes,
-#                 "comments": comments,
-#                 "duration_seconds": duration,
-#                 "published": published_at,
-#                 "thumbnail": thumbnail,
-#                 "transcript": ""  # Will be filled later if requested
-#             })
+            videos.append({
+                "video_id": video_id,
+                "title": title,
+                "description": description,  # ✅ Add this line
+                "url": url,
+                "channel": channel,
+                "subscribers": subscribers,
+                "views": views,
+                "likes": likes,
+                "comments": comments,
+                "duration_seconds": duration,
+                "published": published_at,
+                "thumbnail": thumbnail,
+                "transcript": ""  # Will be filled later if requested
+            })
 
-#         return pd.DataFrame(videos)
+        return pd.DataFrame(videos)
     
-#     except Exception as e:
-#         st.error(f"Error searching YouTube: {str(e)}")
-#         return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error searching YouTube: {str(e)}")
+        return pd.DataFrame()
 
 
-# # 🔧 Set FFmpeg path manually (adjust if your ffmpeg is in a different folder)
-# FFMPEG_PATH = r"C:\ffmpeg\bin"
-# os.environ["PATH"] += os.pathsep + FFMPEG_PATH
+# 🔧 Set FFmpeg path manually (adjust if your ffmpeg is in a different folder)
+FFMPEG_PATH = r"C:\ffmpeg\bin"
+os.environ["PATH"] += os.pathsep + FFMPEG_PATH
 
-# # -----------------------------
-# # Audio Download + Transcription
-# # -----------------------------
-# def download_audio(video_url, output_path="sample_audio.mp3"):
-#     """Download YouTube video audio using yt-dlp"""
-#     ydl_opts = {
-#         "format": "bestaudio/best",
-#         "outtmpl": output_path.replace(".mp3", ""),
-#         "postprocessors": [{
-#             "key": "FFmpegExtractAudio",
-#             "preferredcodec": "mp3",
-#             "preferredquality": "192",
-#         }],
-#         'ffmpeg_location': FFMPEG_PATH,  # 👈 tell yt-dlp where ffmpeg is
-#         "quiet": True,
-#     }
-#     with YoutubeDL(ydl_opts) as ydl:
-#         ydl.download([video_url])
+# -----------------------------
+# Audio Download + Transcription
+# -----------------------------
+def download_audio(video_url, output_path="sample_audio.mp3"):
+    """Download YouTube video audio using yt-dlp"""
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": output_path.replace(".mp3", ""),
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "192",
+        }],
+        'ffmpeg_location': FFMPEG_PATH,  # 👈 tell yt-dlp where ffmpeg is
+        "quiet": True,
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([video_url])
 
-#     # Ensure correct extension
-#     if not output_path.endswith(".mp3"):
-#         output_path += ".mp3"
-#     if not os.path.exists(output_path):
-#         if os.path.exists(output_path.replace(".mp3", "") + ".mp3"):
-#             os.rename(output_path.replace(".mp3", "") + ".mp3", output_path)
-#     return output_path
+    # Ensure correct extension
+    if not output_path.endswith(".mp3"):
+        output_path += ".mp3"
+    if not os.path.exists(output_path):
+        if os.path.exists(output_path.replace(".mp3", "") + ".mp3"):
+            os.rename(output_path.replace(".mp3", "") + ".mp3", output_path)
+    return output_path
 
-# def transcribe_audio(audio_file, model_size="base"):
-#     model = WhisperModel(model_size, device="cpu", compute_type="int8")
-#     # 👇 auto-detect language, but force English output
-#     segments, _ = model.transcribe(audio_file, task="translate")
-#     transcript = " ".join([seg.text.strip() for seg in segments])
-#     return transcript
+def transcribe_audio(audio_file, model_size="base"):
+    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    # 👇 auto-detect language, but force English output
+    segments, _ = model.transcribe(audio_file, task="translate")
+    transcript = " ".join([seg.text.strip() for seg in segments])
+    return transcript
 
-# def get_transcript_from_youtube(video_url):
-#     """Download audio and transcribe instead of Selenium transcript"""
-#     try:
-#         audio_file = download_audio(video_url, "temp_audio.mp3")
-#         transcript = transcribe_audio(audio_file)
-#         return transcript if transcript.strip() else "Transcript not available"
-#     except Exception as e:
-#         return f"Transcript not available ({str(e)})"
+def get_transcript_from_youtube(video_url):
+    """Download audio and transcribe instead of Selenium transcript"""
+    try:
+        audio_file = download_audio(video_url, "temp_audio.mp3")
+        transcript = transcribe_audio(audio_file)
+        return transcript if transcript.strip() else "Transcript not available"
+    except Exception as e:
+        return f"Transcript not available ({str(e)})"
 
     
 @st.cache_data
@@ -283,10 +267,10 @@ if API_KEY == "YOUR_YOUTUBE_API_KEY_HERE":
     st.write("3. Enable YouTube Data API v3 in your Google Cloud project")
 
 if run_button and API_KEY != "YOUR_YOUTUBE_API_KEY_HERE":
-    # df = youtube_search(query, max_results)
+    df = youtube_search(query, max_results)
     if not df.empty:
         st.session_state['video_df'] = df
-        # st.session_state['query'] = query
+        st.session_state['query'] = query
         st.session_state['transcripts_done'] = False
         # Ensure rank column exists
         if "rank" not in df.columns:
@@ -339,22 +323,22 @@ if run_button and API_KEY != "YOUR_YOUTUBE_API_KEY_HERE":
 
             transcript_status = st.empty()
             
-            # if include_transcripts and not st.session_state.get('transcripts_done', False):
-            #     st.subheader("📝 Fetching Transcripts...")
-            #     for idx, row in df.iterrows():
-            #         transcript = get_transcript_from_youtube(row['url'])
-            #         df.at[idx, 'transcript'] = transcript
+            if include_transcripts and not st.session_state.get('transcripts_done', False):
+                st.subheader("📝 Fetching Transcripts...")
+                for idx, row in df.iterrows():
+                    transcript = get_transcript_from_youtube(row['url'])
+                    df.at[idx, 'transcript'] = transcript
                 
-            #     # Save the run
-            #     run_id = f"{query.replace(' ', '_')}_{int(time.time())}"
-            #     file_path = os.path.join(SAVE_DIR, f"{run_id}.parquet")
-            #     df.to_parquet(file_path, index=False)
+                # Save the run
+                run_id = f"{query.replace(' ', '_')}_{int(time.time())}"
+                file_path = os.path.join(SAVE_DIR, f"{run_id}.parquet")
+                df.to_parquet(file_path, index=False)
 
-            #     # Store path in session state
-            #     st.session_state['current_run_file'] = file_path
-            #     st.session_state['transcripts_done'] = True
+                # Store path in session state
+                st.session_state['current_run_file'] = file_path
+                st.session_state['transcripts_done'] = True
             
-            # transcript_status.text("✅ All transcripts processed!")
+            transcript_status.text("✅ All transcripts processed!")
             
             # Show transcript preview
             st.subheader("📜 Transcript Previews")
@@ -371,13 +355,13 @@ if run_button and API_KEY != "YOUR_YOUTUBE_API_KEY_HERE":
         if 'video_df' in st.session_state:
             df = st.session_state['video_df']
 
-            # # Fetch transcripts only once
-            # if include_transcripts and not st.session_state.get('transcripts_done', False):
-            #     for idx, row in df.iterrows():
-            #         transcript = get_transcript_from_youtube(row['url'])
-            #         df.at[idx, 'transcript'] = transcript
-            #     st.session_state['video_df'] = df
-            #     st.session_state['transcripts_done'] = True
+            # Fetch transcripts only once
+            if include_transcripts and not st.session_state.get('transcripts_done', False):
+                for idx, row in df.iterrows():
+                    transcript = get_transcript_from_youtube(row['url'])
+                    df.at[idx, 'transcript'] = transcript
+                st.session_state['video_df'] = df
+                st.session_state['transcripts_done'] = True
 
             # -----------------------------
             # Precompute Embeddings
@@ -385,26 +369,13 @@ if run_button and API_KEY != "YOUR_YOUTUBE_API_KEY_HERE":
             st.subheader("⚡ Computing Embeddings...")
 
             # Title + Description
-            if "embeddings_td" not in st.session_state:
-                combined_td = (df['title'].fillna('') + " " + df['description'].fillna('')).tolist()
-                st.session_state.embeddings_td = compute_embeddings(combined_td)
-
-            if "embeddings_tdt" not in st.session_state:
-                combined_tdt = (
-                    df['title'].fillna('') + " " + df['description'].fillna('') + " " + df['transcript'].fillna('')
-                ).tolist()
-                st.session_state.embeddings_tdt = compute_embeddings(combined_tdt)
-
-            embeddings_td = st.session_state.embeddings_td
-            embeddings_tdt = st.session_state.embeddings_tdt
-
-            # combined_td = (df['title'].fillna('') + " " + df['description'].fillna(''))
-            # embeddings_td = compute_embeddings(combined_td.tolist())
+            combined_td = (df['title'].fillna('') + " " + df['description'].fillna(''))
+            embeddings_td = compute_embeddings(combined_td.tolist())
             sim_matrix_td = cosine_similarity(embeddings_td)
 
             # Title + Description + Transcript
-            # combined_tdt = (df['title'].fillna('') + " " + df['description'].fillna('') + " " + df['transcript'].fillna(''))
-            # embeddings_tdt = compute_embeddings(combined_tdt.tolist())
+            combined_tdt = (df['title'].fillna('') + " " + df['description'].fillna('') + " " + df['transcript'].fillna(''))
+            embeddings_tdt = compute_embeddings(combined_tdt.tolist())
             sim_matrix_tdt = cosine_similarity(embeddings_tdt)
 
 
@@ -643,7 +614,6 @@ if run_button and API_KEY != "YOUR_YOUTUBE_API_KEY_HERE":
         )
 
         st.plotly_chart(fig_perf, use_container_width=True)
-
 
         # -----------------------------
         # Duration Distribution (Interactive)
@@ -1043,22 +1013,22 @@ if run_button and API_KEY != "YOUR_YOUTUBE_API_KEY_HERE":
                     ).to_excel(writer, sheet_name='Similarity_Transcripts')
 
             
-            # st.download_button(
-            #     label="📊 Download Excel Report",
-            #     data=output.getvalue(),
-            #     file_name=f"youtube_analysis_{query.replace(' ', '_')}.xlsx",
-            #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            # )
+            st.download_button(
+                label="📊 Download Excel Report",
+                data=output.getvalue(),
+                file_name=f"youtube_analysis_{query.replace(' ', '_')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         
-        # with col2:
-        #     # CSV download
-        #     csv_output = df.to_csv(index=False)
-        #     st.download_button(
-        #         label="📄 Download CSV Data",
-        #         data=csv_output,
-        #         file_name=f"youtube_data_{query.replace(' ', '_')}.csv",
-        #         mime="text/csv"
-        #     )
+        with col2:
+            # CSV download
+            csv_output = df.to_csv(index=False)
+            st.download_button(
+                label="📄 Download CSV Data",
+                data=csv_output,
+                file_name=f"youtube_data_{query.replace(' ', '_')}.csv",
+                mime="text/csv"
+            )
 
             
         # ---- Run Insight Generation ----
