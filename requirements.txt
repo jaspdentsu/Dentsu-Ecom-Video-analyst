@@ -16,4 +16,5 @@ isodate
 requests
 networkx
 faster-whisper
+beautifulsoup
 
