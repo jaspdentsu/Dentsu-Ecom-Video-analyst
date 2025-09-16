@@ -1,5 +1,7 @@
 import streamlit as st
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # disable GPU
+
 from datetime import datetime
 from brand_similarity_analysis import run_brand_similarity
 from review_similarity_analysis import run_review_similarity
@@ -1013,4 +1015,5 @@ if run_review:
 #     """)
 
 # if __name__ == "__main__":
+
 #     main()
