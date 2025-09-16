@@ -37,11 +37,15 @@ except Exception:
     TESS_AVAILABLE = False
 
 @st.cache_resource
-def load_use_model():
-    return hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+def load_embedding_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
+def compute_use_embedding(text):
+    model = load_embedding_model()
+    return model.encode(text, convert_to_tensor=False, show_progress_bar=False)
 
 # later
-use_model = load_use_model()
+#use_model = load_embedding_model()
 
 # ==== Load models ====
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -159,8 +163,8 @@ def download_image_text_embed(img_urls):
             visual_tags.append([])
     return image_texts, np.array(embeddings), visual_tags
 
-def compute_use_embedding(text):
-    return use_model([text])[0].numpy()
+#def compute_use_embedding(text):
+#    return use_model([text])[0].numpy()
 
 def detect_brand(text):
     known = ["Philips", "SYSKA", "VEGA", "Mi Xiaomi", "Havells", "Panasonic", "Braun", "Bombay Shaving Company", 
@@ -709,5 +713,6 @@ def run_brand_similarity(st, search_url, num_products=15, out_dir="outputs"):
 
     except Exception as e:
         st.error(f"Insight generation failed: {e}")
+
 
 
