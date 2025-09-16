@@ -1,4 +1,6 @@
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # suppress TF logs
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
@@ -33,10 +35,17 @@ try:
 except Exception:
     TESS_AVAILABLE = False
 
+@st.cache_resource
+def load_use_model():
+    return hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+
+# later
+use_model = load_use_model()
+
 # ==== Load models ====
 model = SentenceTransformer('all-MiniLM-L6-v2')
 pytesseract.pytesseract.tesseract_cmd = r"C:\\Users\\jsingh11\\AppData\\Local\\Programs\\Tesseract-OCR\\tesseract.exe"
-use_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+#use_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
@@ -699,3 +708,4 @@ def run_brand_similarity(st, search_url, num_products=15, out_dir="outputs"):
 
     except Exception as e:
         st.error(f"Insight generation failed: {e}")
+
