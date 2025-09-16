@@ -1,59 +1,24 @@
-#yt-dlp
-#streamlit
-#pandas
-#numpy
-#scikit-learn
-#plotly
-#matplotlib
-#seaborn
-#wordcloud
-#networkx
-#openpyxl
-#requests
-#sentence-transformers
-#google-api-python-client
-#isodate
-#requests
-#networkx
-#faster-whisper
-#beautifulsoup4
-#opencv-contrib-python
-#Pillow
-#pytesseract
-#tensorflow-cpu==2.16.1
-#tensorflow-hub
-#selenium
-# Core
+yt-dlp
 streamlit
 pandas
 numpy
-matplotlib
-seaborn
 scikit-learn
 plotly
+matplotlib
+seaborn
+wordcloud
+networkx
 openpyxl
-
-# Web scraping & YouTube
-beautifulsoup4
 requests
-yt-dlp
+sentence-transformers
 google-api-python-client
 isodate
-selenium
-
-# NLP & ML
-tensorflow-cpu
-tensorflow-hub
-torch
-sentence-transformers
-scipy
-
-# Image/Video processing
-opencv-python-headless
+faster-whisper
+beautifulsoup4
+opencv-contrib-python-headless  # ✅ headless build for servers (no GUI deps)
 Pillow
 pytesseract
-
-# Utils
+tensorflow-cpu==2.16.1
+tensorflow-hub
+selenium
 tqdm
-
-
