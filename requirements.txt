@@ -22,3 +22,4 @@ Pillow
 pytesseract
 tensorflow-cpu
 tensorflow-hub
+selenium
