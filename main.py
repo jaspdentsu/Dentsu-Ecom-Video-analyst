@@ -4,7 +4,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # disable GPU
 
 from datetime import datetime
 from brand_similarity_analysis import run_brand_similarity
-from review_similarity_analysis import run_review_similarity
 
 st.set_page_config(page_title="Amazon Brand & Review Analyzer", layout="wide")
 st.title("Amazon Brand & Review Analyzer")
@@ -25,7 +24,6 @@ st.sidebar.header("Controls")
 search_url = st.sidebar.text_input("Amazon search URL", value="https://www.amazon.in/s?k=trimmer")
 num_products = st.sidebar.slider("Number of Products", 5, 30, 15)
 run_brand = st.sidebar.button("Run Brand Similarity")
-run_review = st.sidebar.button("Run Review Similarity")
 
 OUT_DIR = "outputs"
 REV_OUT = "outputs_reviews"
@@ -43,25 +41,5 @@ if run_brand:
     except Exception as e:
         st.error(f"Error: {e}")
 
-if run_review:
-    product_csv = st.sidebar.text_input("Path to product_data.xlsx", value="")
-    if not product_csv:
-        # auto-detect latest
-        found = None
-        for root, _, files in os.walk(OUT_DIR):
-            for f in files:
-                if f == "product_data.xlsx":
-                    found = os.path.join(root, f)
-        product_csv = found
-    if not product_csv or not os.path.exists(product_csv):
-        st.error("No product_data.xlsx found. Run Brand Similarity first.")
-    else:
-        st.info("Running review similarity...")
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        outdir = os.path.join(REV_OUT, ts)
-        os.makedirs(outdir, exist_ok=True)
-        try:
-            run_review_similarity(product_csv, out_dir=outdir)
-            st.success(f"Review results saved in {outdir}")
-        except Exception as e:
-            st.error(f"Error: {e}")
+
+
