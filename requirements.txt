@@ -20,3 +20,5 @@ beautifulsoup4
 opencv-contrib-python
 Pillow
 pytesseract
+tensorflow
+tensorflow-hub
