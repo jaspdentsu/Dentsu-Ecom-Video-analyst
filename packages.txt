@@ -1,7 +1,4 @@
-# For OpenCV
 libgl1
 libglib2.0-0
-
-# For Selenium + Chromium
-chromium
+chromium-browser
 chromium-driver
