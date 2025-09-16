@@ -18,3 +18,4 @@ networkx
 faster-whisper
 beautifulsoup4
 opencv-contrib-python
+Pillow
