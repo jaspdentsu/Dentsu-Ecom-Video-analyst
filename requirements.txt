@@ -1,26 +1,59 @@
-yt-dlp
+#yt-dlp
+#streamlit
+#pandas
+#numpy
+#scikit-learn
+#plotly
+#matplotlib
+#seaborn
+#wordcloud
+#networkx
+#openpyxl
+#requests
+#sentence-transformers
+#google-api-python-client
+#isodate
+#requests
+#networkx
+#faster-whisper
+#beautifulsoup4
+#opencv-contrib-python
+#Pillow
+#pytesseract
+#tensorflow-cpu==2.16.1
+#tensorflow-hub
+#selenium
+# Core
 streamlit
 pandas
 numpy
-scikit-learn
-plotly
 matplotlib
 seaborn
-wordcloud
-networkx
+scikit-learn
+plotly
 openpyxl
+
+# Web scraping & YouTube
+beautifulsoup4
 requests
-sentence-transformers
+yt-dlp
 google-api-python-client
 isodate
-requests
-networkx
-faster-whisper
-beautifulsoup4
-opencv-contrib-python
+selenium
+
+# NLP & ML
+tensorflow-cpu
+tensorflow-hub
+torch
+sentence-transformers
+scipy
+
+# Image/Video processing
+opencv-python-headless
 Pillow
 pytesseract
-tensorflow-cpu==2.16.1
-tensorflow-hub
-selenium
+
+# Utils
+tqdm
+
 
