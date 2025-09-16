@@ -14,6 +14,7 @@ import requests
 from io import BytesIO
 from bs4 import BeautifulSoup
 from PIL import Image
+import streamlit as st
 import cv2
 import pytesseract
 import tensorflow_hub as hub
@@ -708,4 +709,5 @@ def run_brand_similarity(st, search_url, num_products=15, out_dir="outputs"):
 
     except Exception as e:
         st.error(f"Insight generation failed: {e}")
+
 
