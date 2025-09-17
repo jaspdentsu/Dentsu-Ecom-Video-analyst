@@ -2,4 +2,5 @@ libgl1
 libglib2.0-0
 chromium
 chromium-driver
+ffmpeg
 
