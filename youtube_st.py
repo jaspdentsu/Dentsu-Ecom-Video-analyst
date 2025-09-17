@@ -165,19 +165,23 @@ os.environ["PATH"] += os.pathsep + FFMPEG_PATH
 # -----------------------------
 def download_audio(video_url, output_path="sample_audio.mp3"):
     """Download YouTube video audio using yt-dlp"""
+    def fetch_video_metadata(video_url: str):
     ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": output_path.replace(".mp3", ""),
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
-        }],
-        'ffmpeg_location': FFMPEG_PATH,  # 👈 tell yt-dlp where ffmpeg is
         "quiet": True,
+        "skip_download": True,   # don’t download video/audio
+        "noplaylist": True,
+        "extract_flat": False,   # get full metadata, not just flat list
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            )
+        }
     }
     with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([video_url])
+        info = ydl.extract_info(video_url, download=False)
+    return info
 
     # Ensure correct extension
     if not output_path.endswith(".mp3"):
@@ -1086,3 +1090,4 @@ if not run_button:
 # -----------------------------
 st.markdown("---")
 st.markdown("Built with ❤️ using Streamlit | Data from YouTube API v3")
+
